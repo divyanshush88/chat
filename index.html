@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="manifest" href="manifest.json">
     <title>Random Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -75,10 +77,17 @@
             </div>
             <h2 class="text-2xl font-bold mb-2">Talk to Strangers</h2>
             <p class="text-slate-500 mb-8">Click the button below to find a random partner. Your identity is anonymous.</p>
-            
-            <button id="btn-start" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition active:scale-95 flex items-center gap-2 text-lg w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                Start Chatting
-            </button>
+
+            <div class="flex flex-col gap-4 w-full">
+                <button id="btn-start" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition active:scale-95 flex items-center gap-2 text-lg w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation">
+                    <i class="fa-solid fa-comments"></i>
+                    Start Chatting
+                </button>
+                <button id="btn-start-video-chat" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition active:scale-95 flex items-center gap-2 text-lg w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation">
+                    <i class="fa-solid fa-video"></i>
+                    Start Video Chat
+                </button>
+            </div>
             <p id="online-count" class="mt-4 text-sm text-slate-400">
                 Initialize Firestore to start...
             </p>
@@ -194,6 +203,7 @@
         let currentUser = null;
         let currentSessionId = null;
         let queueDocId = null; // The ID of my document in the queue
+        let isVideoChat = false; // Flag for video chat mode
 
         // WebRTC State
         let localStream = null;
@@ -210,6 +220,7 @@
         const viewSearching = document.getElementById('view-searching');
         const viewChat = document.getElementById('view-chat');
         const btnStart = document.getElementById('btn-start');
+        const btnStartVideoChat = document.getElementById('btn-start-video-chat');
         const btnCancelSearch = document.getElementById('btn-cancel-search');
         const btnDisconnect = document.getElementById('btn-disconnect');
         const chatForm = document.getElementById('chat-form');
@@ -247,10 +258,12 @@
                 currentUser = user;
                 statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Online`;
                 btnStart.disabled = false;
+                btnStartVideoChat.disabled = false;
                 onlineCountEl.textContent = "Ready to chat.";
             } else {
                 statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline`;
                 btnStart.disabled = true;
+                btnStartVideoChat.disabled = true;
             }
         });
 
@@ -261,16 +274,17 @@
         // 1. Start Chat / Find Partner
         btnStart.addEventListener('click', async () => {
             if (!currentUser) return;
-            
+
+            isVideoChat = false;
             switchView('searching');
-            
+
             try {
                 // Step A: Look for someone already in the queue
                 // Note: We can't do complex queries like "where userId != myId" efficiently without indexes sometimes
                 // So we fetch a few and filter in memory (Rule 2 compliance)
                 const q = query(QUEUE_COLLECTION, limit(10));
                 const querySnapshot = await getDocs(q);
-                
+
                 let foundPartnerDoc = null;
 
                 for (const docSnap of querySnapshot.docs) {
@@ -293,6 +307,47 @@
 
             } catch (error) {
                 console.error("Error starting chat:", error);
+                alert("Could not connect to server. Please try again.");
+                resetToWelcome();
+            }
+        });
+
+        // 1b. Start Video Chat / Find Partner
+        btnStartVideoChat.addEventListener('click', async () => {
+            if (!currentUser) return;
+
+            isVideoChat = true;
+            switchView('searching');
+
+            try {
+                // Step A: Look for someone already in the queue
+                // Note: We can't do complex queries like "where userId != myId" efficiently without indexes sometimes
+                // So we fetch a few and filter in memory (Rule 2 compliance)
+                const q = query(QUEUE_COLLECTION, limit(10));
+                const querySnapshot = await getDocs(q);
+
+                let foundPartnerDoc = null;
+
+                for (const docSnap of querySnapshot.docs) {
+                    const data = docSnap.data();
+                    // Check if this user is valid and NOT me
+                    // Also check if 'created' is reasonably recent to avoid stale ghosts (optional logic)
+                    if (data.userId !== currentUser.uid) {
+                        foundPartnerDoc = docSnap;
+                        break;
+                    }
+                }
+
+                if (foundPartnerDoc) {
+                    // FOUND SOMEONE!
+                    await createSession(foundPartnerDoc);
+                } else {
+                    // NO ONE FOUND -> ADD MYSELF TO QUEUE
+                    await addToQueue();
+                }
+
+            } catch (error) {
+                console.error("Error starting video chat:", error);
                 alert("Could not connect to server. Please try again.");
                 resetToWelcome();
             }
@@ -677,6 +732,14 @@
             switchView('chat');
             messagesContainer.innerHTML = '<div class="flex justify-center my-4"><span class="text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded">Connection established.</span></div>';
 
+            // If video chat, start video call automatically
+            if (isVideoChat) {
+                startVideoCall().catch(e => {
+                    console.error("Failed to start video call", e);
+                    alert("Could not start video call. Please check camera/microphone permissions.");
+                });
+            }
+
             // Listen to the specific session document
             const sessionRef = doc(SESSIONS_COLLECTION, sessionId);
 
@@ -757,6 +820,21 @@
             };
         }
 
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
