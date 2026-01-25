@@ -3,839 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#3b82f6">
-    <link rel="manifest" href="manifest.json">
-    <title>Random Chat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Random Chat + Video Chat</title>
     <style>
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
-        
-        .message-bubble {
-            max-width: 80%;
-            word-wrap: break-word;
-            animation: fadeIn 0.2s ease-out;
+        /* Dark neon cyberpunk theme */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 10s ease infinite;
+            color: #00ffcc;
+            overflow-x: hidden;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        /* Loader for searching */
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid #3b82f6;
-            width: 24px;
-            height: 24px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
-            animation: spin 1s linear infinite;
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        /* Landing screen */
+        #landing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        #landing h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ffcc;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ffcc; }
+            to { text-shadow: 0 0 30px #00ffcc, 0 0 40px #00ffcc; }
+        }
+
+        #startBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #ff006e, #fb5607);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 0, 110, 0.4);
+        }
+
+        #startBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 0, 110, 0.6);
+        }
+
+        /* Chat interface */
+        #chat {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #videoContainer {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 45%;
+            border-radius: 10px;
+            background: #000;
+        }
+
+        #chatPanel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 10px;
+            max-height: 300px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+        }
+
+        .message.me {
+            background: rgba(255, 0, 110, 0.1);
+            border: 1px solid rgba(255, 0, 110, 0.3);
+            align-self: flex-end;
+        }
+
+        #inputContainer {
+            display: flex;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #00ffcc;
+        }
+
+        #sendBtn {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background: #00ffcc;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #nextBtn {
+            align-self: center;
+            padding: 10px 20px;
+            background: #ff006e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            #landing h1 {
+                font-size: 2rem;
+            }
+
+            #videoContainer {
+                flex-direction: column;
+            }
+
+            video {
+                width: 100%;
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-100 h-screen flex flex-col font-sans text-slate-800 overflow-hidden">
+<body>
+    <div id="landing">
+        <h1>Random Chat + Video</h1>
+        <button id="startBtn">Start Random Chat</button>
+    </div>
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
-                <i class="fa-solid fa-comments"></i>
-            </div>
-            <h1 class="font-bold text-xl tracking-tight text-slate-700">Random<span class="text-blue-500">Chat</span></h1>
+    <div id="chat">
+        <div id="videoContainer">
+            <video id="localVideo" autoplay muted></video>
+            <video id="remoteVideo" autoplay></video>
         </div>
-        <div id="connection-status" class="text-xs font-medium text-amber-500 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            Connecting...
+        <div id="chatPanel" class="glass">
+            <div id="messages"></div>
+            <div id="inputContainer">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button id="sendBtn">Send</button>
+            </div>
+            <button id="nextBtn">Next</button>
         </div>
-    </header>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 relative w-full max-w-md mx-auto bg-white sm:border-x sm:border-slate-200 shadow-lg flex flex-col overflow-hidden">
-        
-        <!-- STATE: IDLE / WELCOME -->
-        <div id="view-welcome" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white z-20 transition-opacity duration-300">
-            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 text-3xl mb-6">
-                <i class="fa-solid fa-user-astronaut"></i>
-            </div>
-            <h2 class="text-2xl font-bold mb-2">Talk to Strangers</h2>
-            <p class="text-slate-500 mb-8">Click the button below to find a random partner. Your identity is anonymous.</p>
-
-            <div class="flex flex-col gap-4 w-full">
-                <button id="btn-start" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition active:scale-95 flex items-center gap-2 text-lg w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation">
-                    <i class="fa-solid fa-comments"></i>
-                    Start Chatting
-                </button>
-                <button id="btn-start-video-chat" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition active:scale-95 flex items-center gap-2 text-lg w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation">
-                    <i class="fa-solid fa-video"></i>
-                    Start Video Chat
-                </button>
-            </div>
-            <p id="online-count" class="mt-4 text-sm text-slate-400">
-                Initialize Firestore to start...
-            </p>
-        </div>
-
-        <!-- STATE: SEARCHING -->
-        <div id="view-searching" class="hidden absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white/95 z-30 backdrop-blur-sm">
-            <div class="loader mb-4 w-12 h-12 border-4 border-t-blue-500"></div>
-            <h3 class="text-xl font-bold text-slate-700">Looking for a partner...</h3>
-            <p class="text-slate-500 mt-2">Please wait, this might take a moment.</p>
-            <button id="btn-cancel-search" class="mt-8 text-slate-400 hover:text-slate-600 font-medium underline">
-                Cancel
-            </button>
-        </div>
-
-        <!-- STATE: CHAT -->
-        <div id="view-chat" class="hidden flex flex-col h-full w-full">
-
-            <!-- Chat Header -->
-            <div class="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span class="font-semibold text-slate-600">Stranger</span>
-                </div>
-                <button id="btn-disconnect" class="text-xs bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded-md font-medium transition">
-                    Disconnect (ESC)
-                </button>
-            </div>
-
-            <!-- Video Area -->
-            <div id="video-container" class="hidden bg-black relative">
-                <video id="remote-video" class="w-full h-48 object-cover" autoplay></video>
-                <video id="local-video" class="absolute bottom-2 right-2 w-24 h-18 border-2 border-white rounded" autoplay muted></video>
-                <div class="absolute bottom-2 left-2 flex gap-2">
-                    <button id="btn-start-video" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Start Video Call</button>
-                    <button id="btn-toggle-mic" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm hidden">Mute Mic</button>
-                    <button id="btn-toggle-camera" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm hidden">Turn Off Camera</button>
-                    <button id="btn-end-call" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm hidden">End Call</button>
-                </div>
-            </div>
-
-            <!-- Messages Area -->
-            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
-                <!-- Messages injected here -->
-                <div class="flex justify-center my-4">
-                    <span class="text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded">You are now connected to a stranger. Say Hi!</span>
-                </div>
-            </div>
-
-            <!-- Input Area -->
-            <div class="p-3 border-t border-slate-200 bg-white pb-safe">
-                <form id="chat-form" class="flex gap-2">
-                    <input 
-                        type="text" 
-                        id="message-input" 
-                        class="flex-1 bg-slate-100 border-transparent focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-full px-4 py-3 outline-none transition"
-                        placeholder="Type a message..." 
-                        autocomplete="off"
-                    >
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Scripts -->
+    <!-- Firebase CDN -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            onSnapshot, 
-            doc, 
-            updateDoc, 
-            deleteDoc,
-            getDocs,
-            query,
-            limit,
-            serverTimestamp,
-            arrayUnion,
-            getDoc,
-            setDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // --- Configuration ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+        // Firebase config
         const firebaseConfig = {
-          apiKey: "AIzaSyDmNwZ8U8D7djlYc8PvpnoJchhG9trQkaY",
-  authDomain: "talktosnap-715c0.firebaseapp.com",
-  projectId: "talktosnap-715c0",
-  storageBucket: "talktosnap-715c0.firebasestorage.app",
-  messagingSenderId: "352606100248",
-  appId: "1:352606100248:web:c2e5638dad23152064dc6d",
-  measurementId: "G-YN28245VVC"
-};
+            apiKey: "AIzaSyA93UpZrSRlO1wqmZF_TT3vtMvQcl3SnS0",
+            authDomain: "divyanshu-3029e.firebaseapp.com",
+            projectId: "divyanshu-3029e",
+            storageBucket: "divyanshu-3029e.firebasestorage.app",
+            messagingSenderId: "250682426468",
+            appId: "1:250682426468:web:2cb71c4ebabf169649cb71",
+            measurementId: "G-Y20DJFFXLG"
+        };
 
-        
+        // Initialize Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc as docRef, setDoc, getDoc, updateDoc, onSnapshot, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
+        const rtdb = getDatabase(app);
 
-        // --- Collections Paths ---
-        // Using strict public paths as per instructions
-        const QUEUE_COLLECTION = collection(db, 'artifacts', appId, 'public', 'data', 'random_chat_queue');
-        const SESSIONS_COLLECTION = collection(db, 'artifacts', appId, 'public', 'data', 'random_chat_sessions');
+        // Global variables
+        let userId = Math.random().toString(36).substr(2, 9);
+        let partnerId = null;
+        let localStream;
+        let peerConnection;
+        let roomId;
 
-        // --- State ---
-        let currentUser = null;
-        let currentSessionId = null;
-        let queueDocId = null; // The ID of my document in the queue
-        let isVideoChat = false; // Flag for video chat mode
+        // DOM elements
+        const landing = document.getElementById('landing');
+        const chat = document.getElementById('chat');
+        const startBtn = document.getElementById('startBtn');
+        const messages = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
 
-        // WebRTC State
-        let localStream = null;
-        let peerConnection = null;
-        let isVideoCallActive = false;
-        let lastSignalingTimestamp = 0;
+        // WebRTC configuration
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' }
+            ]
+        };
 
-        // Listeners
-        let unsubscribeSession = null;
-        let unsubscribeQueueMatch = null;
-
-        // --- DOM Elements ---
-        const viewWelcome = document.getElementById('view-welcome');
-        const viewSearching = document.getElementById('view-searching');
-        const viewChat = document.getElementById('view-chat');
-        const btnStart = document.getElementById('btn-start');
-        const btnStartVideoChat = document.getElementById('btn-start-video-chat');
-        const btnCancelSearch = document.getElementById('btn-cancel-search');
-        const btnDisconnect = document.getElementById('btn-disconnect');
-        const chatForm = document.getElementById('chat-form');
-        const messageInput = document.getElementById('message-input');
-        const messagesContainer = document.getElementById('messages-container');
-        const statusEl = document.getElementById('connection-status');
-        const onlineCountEl = document.getElementById('online-count');
-
-        // Video elements
-        const videoContainer = document.getElementById('video-container');
-        const localVideo = document.getElementById('local-video');
-        const remoteVideo = document.getElementById('remote-video');
-        const btnStartVideo = document.getElementById('btn-start-video');
-        const btnToggleMic = document.getElementById('btn-toggle-mic');
-        const btnToggleCamera = document.getElementById('btn-toggle-camera');
-        const btnEndCall = document.getElementById('btn-end-call');
-
-        // --- Initialization ---
-        async function init() {
-            try {
-                // Sign in anonymously first
-                if(typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Auth failed", e);
-                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Error`;
-            }
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Online`;
-                btnStart.disabled = false;
-                btnStartVideoChat.disabled = false;
-                onlineCountEl.textContent = "Ready to chat.";
-            } else {
-                statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Offline`;
-                btnStart.disabled = true;
-                btnStartVideoChat.disabled = true;
-            }
-        });
-
-        init();
-
-        // --- Actions ---
-
-        // 1. Start Chat / Find Partner
-        btnStart.addEventListener('click', async () => {
-            if (!currentUser) return;
-
-            isVideoChat = false;
-            switchView('searching');
-
-            try {
-                // Step A: Look for someone already in the queue
-                // Note: We can't do complex queries like "where userId != myId" efficiently without indexes sometimes
-                // So we fetch a few and filter in memory (Rule 2 compliance)
-                const q = query(QUEUE_COLLECTION, limit(10));
-                const querySnapshot = await getDocs(q);
-
-                let foundPartnerDoc = null;
-
-                for (const docSnap of querySnapshot.docs) {
-                    const data = docSnap.data();
-                    // Check if this user is valid and NOT me
-                    // Also check if 'created' is reasonably recent to avoid stale ghosts (optional logic)
-                    if (data.userId !== currentUser.uid) {
-                        foundPartnerDoc = docSnap;
-                        break;
-                    }
-                }
-
-                if (foundPartnerDoc) {
-                    // FOUND SOMEONE!
-                    await createSession(foundPartnerDoc);
-                } else {
-                    // NO ONE FOUND -> ADD MYSELF TO QUEUE
-                    await addToQueue();
-                }
-
-            } catch (error) {
-                console.error("Error starting chat:", error);
-                alert("Could not connect to server. Please try again.");
-                resetToWelcome();
-            }
-        });
-
-        // 1b. Start Video Chat / Find Partner
-        btnStartVideoChat.addEventListener('click', async () => {
-            if (!currentUser) return;
-
-            isVideoChat = true;
-            switchView('searching');
-
-            try {
-                // Step A: Look for someone already in the queue
-                // Note: We can't do complex queries like "where userId != myId" efficiently without indexes sometimes
-                // So we fetch a few and filter in memory (Rule 2 compliance)
-                const q = query(QUEUE_COLLECTION, limit(10));
-                const querySnapshot = await getDocs(q);
-
-                let foundPartnerDoc = null;
-
-                for (const docSnap of querySnapshot.docs) {
-                    const data = docSnap.data();
-                    // Check if this user is valid and NOT me
-                    // Also check if 'created' is reasonably recent to avoid stale ghosts (optional logic)
-                    if (data.userId !== currentUser.uid) {
-                        foundPartnerDoc = docSnap;
-                        break;
-                    }
-                }
-
-                if (foundPartnerDoc) {
-                    // FOUND SOMEONE!
-                    await createSession(foundPartnerDoc);
-                } else {
-                    // NO ONE FOUND -> ADD MYSELF TO QUEUE
-                    await addToQueue();
-                }
-
-            } catch (error) {
-                console.error("Error starting video chat:", error);
-                alert("Could not connect to server. Please try again.");
-                resetToWelcome();
-            }
-        });
-
-        // 2. Create Session (I am the Host)
-        async function createSession(partnerQueueDoc) {
-            const partnerData = partnerQueueDoc.data();
-            
-            // 1. Create the session document
-            // We create it with an initial system message
-            const newSessionRef = await addDoc(SESSIONS_COLLECTION, {
-                hostId: currentUser.uid,
-                guestId: partnerData.userId,
-                createdAt: serverTimestamp(),
-                status: 'active',
-                messages: [], // Store messages in an array for single-doc simplicity
-                signaling: [] // Initialize signaling array for WebRTC
-            });
-
-            currentSessionId = newSessionRef.id;
-
-            // 2. Remove partner from queue (so no one else picks them)
-            try {
-                await deleteDoc(partnerQueueDoc.ref);
-            } catch (e) {
-                // If we fail to delete, someone else might have grabbed them.
-                // In a robust app, we'd use a Transaction. 
-                // Here, we'll just assume if delete fails, we might have a race condition, 
-                // but we proceed since we created the session referencing them.
-                console.warn("Partner queue delete warning", e);
-            }
-
-            // 3. Enter Chat
-            enterChat(currentSessionId);
-        }
-
-        // 3. Add to Queue (I am the Guest waiting)
-        async function addToQueue() {
-            const docRef = await addDoc(QUEUE_COLLECTION, {
-                userId: currentUser.uid,
-                joinedAt: serverTimestamp()
-            });
-            queueDocId = docRef.id;
-
-            // Listen for sessions where *I* am the guest
-            // We need to scan sessions. Due to limitations, we'll listen to the collection
-            // but we filter strictly in memory or via simple property match if possible.
-            // Ideally: where('guestId', '==', currentUser.uid)
-            // Note: This requires an index usually, but for simple fields it might work. 
-            // If it fails Rule 2, we remove 'where' and filter client side, but 'where' equality is usually safe.
-            // Let's try a simple equality query.
-            
-            // Wait loop
-            const q = query(SESSIONS_COLLECTION, limit(50)); 
-            
-            unsubscribeQueueMatch = onSnapshot(q, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const data = change.doc.data();
-                        // Check if this session is for me
-                        if (data.guestId === currentUser.uid && data.status === 'active') {
-                            // MATCHED!
-                            currentSessionId = change.doc.id;
-                            // Remove myself from queue
-                            removeFromQueue();
-                            // Enter chat
-                            enterChat(currentSessionId);
-                        }
-                    }
-                });
-            });
-        }
-
-        // 4. Cleanup Queue
-        async function removeFromQueue() {
-            if (unsubscribeQueueMatch) {
-                unsubscribeQueueMatch();
-                unsubscribeQueueMatch = null;
-            }
-            if (queueDocId) {
-                try {
-                    await deleteDoc(doc(QUEUE_COLLECTION, queueDocId));
-                } catch(e) { console.log("Queue cleanup", e); }
-                queueDocId = null;
-            }
-        }
-
-
-
-        // 6. Messaging Logic
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = messageInput.value.trim();
-            if (!text || !currentSessionId) return;
-
-            messageInput.value = '';
-
-            const sessionRef = doc(SESSIONS_COLLECTION, currentSessionId);
-            
-            const newMessage = {
-                senderId: currentUser.uid,
-                text: text,
-                timestamp: Date.now()
-            };
-
-            try {
-                await updateDoc(sessionRef, {
-                    messages: arrayUnion(newMessage)
-                });
-            } catch (e) {
-                console.error("Send failed", e);
-                appendSystemMessage("Failed to send message.");
-            }
-        });
-
-        function renderMessages(messages) {
-            messagesContainer.innerHTML = ''; // simplistic re-render
-            
-            // Initial Spacer
-            messagesContainer.innerHTML += '<div class="h-4"></div>';
-
-            let lastSender = null;
-
-            messages.forEach(msg => {
-                const isMe = msg.senderId === currentUser.uid;
-                const wrapper = document.createElement('div');
-                wrapper.className = `flex w-full mb-2 ${isMe ? 'justify-end' : 'justify-start'}`;
-                
-                const bubble = document.createElement('div');
-                bubble.className = `message-bubble px-4 py-2 rounded-2xl text-sm ${
-                    isMe 
-                    ? 'bg-blue-500 text-white rounded-br-none' 
-                    : 'bg-slate-200 text-slate-800 rounded-bl-none'
-                }`;
-                bubble.textContent = msg.text;
-                
-                wrapper.appendChild(bubble);
-                messagesContainer.appendChild(wrapper);
-            });
-
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        function appendSystemMessage(text) {
-            const div = document.createElement('div');
-            div.className = "flex justify-center my-2";
-            div.innerHTML = `<span class="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-1 rounded">${text}</span>`;
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // 7. Disconnect / End
-        btnDisconnect.addEventListener('click', async () => {
-            if (confirm("Are you sure you want to disconnect?")) {
-                await endCurrentSession();
-                resetToWelcome();
-            }
-        });
-
-        // Allow ESC to disconnect
-        document.addEventListener('keydown', (e) => {
-            if(e.key === "Escape" && !viewChat.classList.contains('hidden')) {
-                btnDisconnect.click();
-            }
-        });
-
-        async function endCurrentSession() {
-            // Clean listeners
-            if (unsubscribeSession) {
-                unsubscribeSession();
-                unsubscribeSession = null;
-            }
-
-            // Mark session as ended in DB (so partner knows)
-            if (currentSessionId) {
-                const ref = doc(SESSIONS_COLLECTION, currentSessionId);
-                try {
-                    await updateDoc(ref, { status: 'ended' });
-                } catch (e) {
-                    // It might already be deleted
-                }
-                currentSessionId = null;
-            }
-        }
-
-
-
-        // 8. Helpers
-        function switchView(viewName) {
-            viewWelcome.classList.add('hidden');
-            viewSearching.classList.add('hidden');
-            viewChat.classList.add('hidden');
-
-            if (viewName === 'welcome') viewWelcome.classList.remove('hidden');
-            if (viewName === 'searching') viewSearching.classList.remove('hidden');
-            if (viewName === 'chat') viewChat.classList.remove('hidden');
-        }
-
-        function resetToWelcome() {
-            removeFromQueue(); // Safety cleanup
-            switchView('welcome');
-        }
-
-        btnCancelSearch.addEventListener('click', () => {
-            removeFromQueue();
-            resetToWelcome();
-        });
-
-        // Cleanup on window close
-        window.addEventListener('beforeunload', () => {
-            endCurrentSession();
-            removeFromQueue();
-            endVideoCall();
-        });
-
-        // --- WebRTC Functions ---
-
-        // Start Video Call
-        btnStartVideo.addEventListener('click', async () => {
-            if (!currentSessionId) return;
-            try {
-                await startVideoCall();
-            } catch (e) {
-                console.error("Failed to start video call", e);
-                alert("Could not start video call. Please check camera/microphone permissions.");
-            }
-        });
-
-        // Toggle Mic
-        btnToggleMic.addEventListener('click', () => {
-            if (localStream) {
-                const audioTrack = localStream.getAudioTracks()[0];
-                if (audioTrack) {
-                    audioTrack.enabled = !audioTrack.enabled;
-                    btnToggleMic.textContent = audioTrack.enabled ? 'Mute Mic' : 'Unmute Mic';
-                }
-            }
-        });
-
-        // Toggle Camera
-        btnToggleCamera.addEventListener('click', () => {
-            if (localStream) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    videoTrack.enabled = !videoTrack.enabled;
-                    btnToggleCamera.textContent = videoTrack.enabled ? 'Turn Off Camera' : 'Turn On Camera';
-                }
-            }
-        });
-
-        // End Call
-        btnEndCall.addEventListener('click', () => {
-            endVideoCall();
-        });
-
-        async function startVideoCall() {
-            if (isVideoCallActive) return;
+        // Start random chat
+        startBtn.addEventListener('click', async () => {
+            landing.style.display = 'none';
+            chat.style.display = 'flex';
 
             // Get user media
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            localVideo.srcObject = localStream;
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+            }
 
-            // Create peer connection
-            peerConnection = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
+            // Find partner
+            await findPartner();
+        });
+
+        // Find a random partner
+        async function findPartner() {
+            const waitingRef = docRef(db, 'waiting', userId);
+            await setDoc(waitingRef, { userId, timestamp: Date.now() });
+
+            // Listen for matches
+            const unsubscribe = onSnapshot(waitingRef, async (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.partnerId && data.partnerId !== userId) {
+                        partnerId = data.partnerId;
+                        roomId = [userId, partnerId].sort().join('-');
+                        await deleteDoc(waitingRef);
+                        await startChat();
+                    }
+                }
             });
 
-            // Add local stream to peer connection
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-
-            // Handle remote stream
-            peerConnection.ontrack = (event) => {
-                if (event.streams[0]) {
-                    remoteVideo.srcObject = event.streams[0];
+            // Check for existing waiting users
+            const waitingUsers = await getDocs(collection(db, 'waiting'));
+            for (const doc of waitingUsers.docs) {
+                const data = doc.data();
+                if (data.userId !== userId && !data.partnerId) {
+                    partnerId = data.userId;
+                    roomId = [userId, partnerId].sort().join('-');
+                    await updateDoc(doc.ref, { partnerId: userId });
+                    await setDoc(docRef(db, 'waiting', userId), { partnerId });
+                    await startChat();
+                    break;
                 }
-            };
-
-            // Handle ICE candidates
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    sendSignalingData({ type: 'ice-candidate', candidate: event.candidate });
-                }
-            };
-
-            // Create offer
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            sendSignalingData({ type: 'offer', offer: offer });
-
-            // Show video UI
-            videoContainer.classList.remove('hidden');
-            btnStartVideo.classList.add('hidden');
-            btnToggleMic.classList.remove('hidden');
-            btnToggleCamera.classList.remove('hidden');
-            btnEndCall.classList.remove('hidden');
-
-            isVideoCallActive = true;
-
-            // Listen for signaling data
-            listenForSignaling();
+            }
         }
 
-        function endVideoCall() {
-            if (!isVideoCallActive) return;
+        // Start chat
+        async function startChat() {
+            // Initialize WebRTC
+            peerConnection = new RTCPeerConnection(rtcConfig);
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-            // Close peer connection
+            peerConnection.ontrack = event => {
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    set(ref(rtdb, `rooms/${roomId}/candidates/${userId}`), event.candidate.toJSON());
+                }
+            };
+
+            // Listen for remote candidates
+            onValue(ref(rtdb, `rooms/${roomId}/candidates/${partnerId}`), snapshot => {
+                const candidate = snapshot.val();
+                if (candidate) {
+                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                }
+            });
+
+            // Create offer if userId < partnerId
+            if (userId < partnerId) {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                set(ref(rtdb, `rooms/${roomId}/offer`), offer);
+            } else {
+                // Listen for offer
+                onValue(ref(rtdb, `rooms/${roomId}/offer`), async snapshot => {
+                    const offer = snapshot.val();
+                    if (offer) {
+                        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                        const answer = await peerConnection.createAnswer();
+                        await peerConnection.setLocalDescription(answer);
+                        set(ref(rtdb, `rooms/${roomId}/answer`), answer);
+                    }
+                });
+            }
+
+            // Listen for answer
+            onValue(ref(rtdb, `rooms/${roomId}/answer`), snapshot => {
+                const answer = snapshot.val();
+                if (answer) {
+                    peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                }
+            });
+
+            // Listen for messages
+            onValue(ref(rtdb, `rooms/${roomId}/messages`), snapshot => {
+                const msgs = snapshot.val();
+                if (msgs) {
+                    messages.innerHTML = '';
+                    Object.values(msgs).forEach(msg => {
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = `message ${msg.sender === userId ? 'me' : ''}`;
+                        msgDiv.textContent = msg.text;
+                        messages.appendChild(msgDiv);
+                    });
+                    messages.scrollTop = messages.scrollHeight;
+                }
+            });
+        }
+
+        // Send message
+        sendBtn.addEventListener('click', () => {
+            const text = messageInput.value.trim();
+            if (text && roomId) {
+                const msgRef = push(ref(rtdb, `rooms/${roomId}/messages`));
+                set(msgRef, { sender: userId, text, timestamp: Date.now() });
+                messageInput.value = '';
+            }
+        });
+
+        messageInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+
+        // Next partner
+        nextBtn.addEventListener('click', async () => {
             if (peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
             }
-
-            // Stop local stream
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
             }
-
-            // Clear video elements
-            localVideo.srcObject = null;
             remoteVideo.srcObject = null;
+            partnerId = null;
+            roomId = null;
+            messages.innerHTML = '';
+            await findPartner();
+        });
 
-            // Hide video UI
-            videoContainer.classList.add('hidden');
-            btnStartVideo.classList.remove('hidden');
-            btnToggleMic.classList.add('hidden');
-            btnToggleCamera.classList.add('hidden');
-            btnEndCall.classList.add('hidden');
-
-            isVideoCallActive = false;
-        }
-
-        function sendSignalingData(data) {
-            if (!currentSessionId) return;
-            const sessionRef = doc(SESSIONS_COLLECTION, currentSessionId);
-            updateDoc(sessionRef, {
-                signaling: arrayUnion({ ...data, senderId: currentUser.uid, timestamp: Date.now() })
-            });
-        }
-
-        function listenForSignaling() {
-            // Signaling is handled in the session listener
-        }
-
-        // Handle signaling in session listener
-        // Modify the session listener to handle signaling
-        function handleSignaling(signalingData) {
-            if (!peerConnection || !isVideoCallActive) return;
-
-            signalingData.forEach(signal => {
-                if (signal.senderId === currentUser.uid || signal.timestamp <= lastSignalingTimestamp) return; // Ignore own signals and old signals
-
-                try {
-                    if (signal.type === 'offer') {
-                        peerConnection.setRemoteDescription(new RTCSessionDescription(signal.offer));
-                        peerConnection.createAnswer().then(answer => {
-                            peerConnection.setLocalDescription(answer);
-                            sendSignalingData({ type: 'answer', answer: answer });
-                        }).catch(e => console.error("Error creating answer:", e));
-                    } else if (signal.type === 'answer') {
-                        peerConnection.setRemoteDescription(new RTCSessionDescription(signal.answer));
-                    } else if (signal.type === 'ice-candidate') {
-                        peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
-                    }
-                    lastSignalingTimestamp = signal.timestamp;
-                } catch (e) {
-                    console.error("Error handling signaling data:", e);
-                }
-            });
-        }
-
-        // Update session listener to handle signaling
-        // In the enterChat function, modify the onSnapshot to handle signaling
-        function enterChat(sessionId) {
-            // UI Update
-            switchView('chat');
-            messagesContainer.innerHTML = '<div class="flex justify-center my-4"><span class="text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded">Connection established.</span></div>';
-
-            // If video chat, start video call automatically
-            if (isVideoChat) {
-                startVideoCall().catch(e => {
-                    console.error("Failed to start video call", e);
-                    alert("Could not start video call. Please check camera/microphone permissions.");
-                });
+        // Auto disconnect handling
+        window.addEventListener('beforeunload', () => {
+            if (roomId) {
+                remove(ref(rtdb, `rooms/${roomId}`));
             }
-
-            // Listen to the specific session document
-            const sessionRef = doc(SESSIONS_COLLECTION, sessionId);
-
-            unsubscribeSession = onSnapshot(sessionRef, (docSnap) => {
-                if (!docSnap.exists()) {
-                    // Session deleted
-                    handlePartnerDisconnect();
-                    return;
-                }
-
-                const data = docSnap.data();
-
-                // Check if status changed to ended
-                if (data.status === 'ended') {
-                    handlePartnerDisconnect();
-                    return;
-                }
-
-                // Render Messages
-                if (data.messages) {
-                    renderMessages(data.messages);
-                }
-
-                // Handle Signaling
-                if (data.signaling) {
-                    handleSignaling(data.signaling);
-                }
-            }, (error) => {
-                console.error("Session listen error", error);
-                handlePartnerDisconnect();
-            });
-        }
-
-
-
-        // Update handlePartnerDisconnect to end video call
-        function handlePartnerDisconnect() {
-            if (unsubscribeSession) unsubscribeSession();
-            unsubscribeSession = null;
-            currentSessionId = null;
-
-            // End video call
-            endVideoCall();
-
-            appendSystemMessage("Stranger has disconnected.");
-
-            // Disable input
-            const input = document.getElementById('message-input');
-            const btn = chatForm.querySelector('button');
-            input.disabled = true;
-            btn.disabled = true;
-            input.placeholder = "Conversation ended.";
-
-            // Change disconnect button to "New Chat"
-            btnDisconnect.textContent = "New Chat";
-            btnDisconnect.classList.remove('bg-red-100', 'text-red-600');
-            btnDisconnect.classList.add('bg-blue-100', 'text-blue-600');
-
-            btnDisconnect.onclick = () => {
-                resetToWelcome();
-                // Reset button style
-                btnDisconnect.textContent = "Disconnect (ESC)";
-                btnDisconnect.classList.add('bg-red-100', 'text-red-600');
-                btnDisconnect.classList.remove('bg-blue-100', 'text-blue-600');
-
-                // Re-enable input
-                input.disabled = false;
-                btn.disabled = false;
-                input.placeholder = "Type a message...";
-
-                // Re-bind original disconnect handler
-                btnDisconnect.onclick = async () => {
-                    if (confirm("Are you sure?")) {
-                        await endCurrentSession();
-                        resetToWelcome();
-                    }
-                };
-            };
-        }
-
-    </script>
-
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch(registrationError => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
-            });
-        }
+        });
     </script>
 </body>
 </html>
-
